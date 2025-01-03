@@ -1,0 +1,74 @@
+#API INTEGRATION AND DATA VISUALIZATION
+
+import requests
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Step 1: Fetch Data from OpenWeatherMap API
+def fetch_weather_data(city, api_key):
+    url = f"http://api.openweathermap.org/data/2.5/forecast"
+    params = {"q": city, "appid": api_key, "units": "metric"}
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print("Error fetching data:", response.status_code)
+        return None
+
+# Step 2: Process Data
+def process_weather_data(data):
+    forecast_list = data['list']
+    records = []
+    
+    for forecast in forecast_list:
+        records.append({
+            "datetime": forecast["dt_txt"],
+            "temperature": forecast["main"]["temp"],
+            "humidity": forecast["main"]["humidity"],
+            "wind_speed": forecast["wind"]["speed"]
+        })
+    
+    return pd.DataFrame(records)
+
+# Step 3: Create Visualizations
+def create_visualizations(df, city):
+    sns.set_theme(style="whitegrid")
+    
+    # Line chart for temperature
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(x='datetime', y='temperature', data=df, label="Temperature (°C)", marker="o")
+    plt.xticks(rotation=45)
+    plt.title(f"Temperature Forecast for {city}", fontsize=16)
+    plt.xlabel("Datetime", fontsize=12)
+    plt.ylabel("Temperature (°C)", fontsize=12)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+    
+    # Scatter plot for humidity vs wind speed
+    plt.figure(figsize=(8, 6))
+    sns.scatterplot(x='humidity', y='wind_speed', data=df, hue='temperature', palette="coolwarm", size="temperature", sizes=(20, 200))
+    plt.title(f"Humidity vs Wind Speed in {city}", fontsize=16)
+    plt.xlabel("Humidity (%)", fontsize=12)
+    plt.ylabel("Wind Speed (m/s)", fontsize=12)
+    plt.legend(title="Temperature")
+    plt.tight_layout()
+    plt.show()
+
+# Main Function
+def main():
+    city = "London"  # Change to your preferred city
+    api_key = "your_api_key_here"  # Replace with your OpenWeatherMap API key
+    
+    # Fetch and process data
+    weather_data = fetch_weather_data(city, api_key)
+    if weather_data:
+        weather_df = process_weather_data(weather_data)
+        
+        # Create visualizations
+        create_visualizations(weather_df, city)
+
+if __name__ == "__main__":
+    main()
